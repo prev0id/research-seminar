@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="ru">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Роадмап Backend-разработки</title>
+        <style>
+            * {
+                /* css reset */
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+            body {
+                font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+                background-color: #f4f6f8;
+                color: #333;
+                line-height: 1.6;
+                padding: 20px;
+            }
+            .container {
+                max-width: 1000px;
+                margin: 0 auto;
+                background: #fff;
+                padding: 40px;
+                border-radius: 12px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            }
+            h1 {
+                text-align: center;
+                font-size: 2.8em;
+                margin-bottom: 20px;
+            }
+            .topic {
+                margin-bottom: 30px;
+                padding: 20px;
+                border-radius: 8px;
+                background: #fafafa;
+                transition: transform 0.2s;
+            }
+            .topic:hover {
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            }
+            h2 {
+                text-align: center;
+                font-size: 1.8em;
+                margin-bottom: 10px;
+            }
+            p.description {
+                margin-bottom: 12px;
+                padding: 0 10px;
+                text-align: center;
+            }
+            .keywords-list,
+            ul {
+                list-style: none;
+                padding-left: 0;
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 8px;
+                margin-bottom: 16px;
+            }
+            .keyword {
+                background: #e0e7ff;
+                color: #1e40af;
+                padding: 4px 10px;
+                border-radius: 4px;
+                font-size: 0.85em;
+            }
+            h3 {
+                font-size: 1.2em;
+                margin-bottom: 8px;
+                text-align: center;
+            }
+            .subtopic-item {
+                background: #fff;
+                border: 1px solid #e2e8f0;
+                padding: 12px 16px;
+                border-radius: 6px;
+                margin-bottom: 10px;
+                transition: background 0.2s;
+            }
+            .subtopic-item:hover {
+                background: #f0f5ff;
+            }
+            .subtopic-title {
+                font-weight: 600;
+                display: block;
+                margin-bottom: 4px;
+                text-align: center;
+            }
+            .subtopic-keywords {
+                justify-content: center;
+            }
+            .article-button {
+                margin-top: 10px;
+                padding: 6px 12px;
+                border: none;
+                background-color: #3b82f6;
+                color: white;
+                border-radius: 4px;
+                cursor: pointer;
+            }
+            .article-button:hover {
+                background-color: #2563eb;
+            }
+            .article-popover {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+
+                padding: 16px;
+                background-color: #ffffff;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+
+                z-index: 1000;
+                display: none;
+            }
+
+            /* Optional overlay to darken background content */
+            .popover-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                height: 100vh;
+                width: 100vw;
+                background: rgba(0, 0, 0, 0.4);
+                z-index: 999;
+                display: none;
+            }
+            .article-button:focus + .article-popover {
+                display: block;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Роадмап: {{.Area}}</h1>
+            {{range .Topics}}
+            <div class="topic">
+                <h2>{{.Title}}</h2>
+                <p class="description">{{.Description}}</p>
+                <ul class="keywords-list">
+                    {{range .Keywords}}
+                    <li class="keyword">{{.}}</li>
+                    {{end}}
+                </ul>
+                {{if .Subtopics}}
+                <h3>Подтемы</h3>
+                <ul>
+                    {{range .Subtopics}}
+                    <li class="subtopic-item">
+                        <span class="subtopic-title">{{.Title}}</span>
+                        <p>{{.Description}}</p>
+                        <ul class="keywords-list subtopic-keywords">
+                            {{range .Keywords}}
+                            <li class="keyword">{{.}}</li>
+                            {{end}}
+                        </ul>
+                        {{if .Articles}} {{range .Articles}}
+                        <div>
+                            <button
+                                class="article-button"
+                                popovertarget="article-{{.Title}}"
+                            >
+                                {{.Title}}
+                            </button>
+                            <div
+                                popover
+                                id="article-{{.Title}}"
+                                class="article-popover"
+                            >
+                                <strong>{{.Title}}</strong>
+                                <p>{{.Content}}</p>
+                            </div>
+                        </div>
+                        {{end}} {{end}}
+                    </li>
+                    {{end}}
+                </ul>
+                {{end}}
+            </div>
+            {{end}}
+        </div>
+    </body>
+</html>
