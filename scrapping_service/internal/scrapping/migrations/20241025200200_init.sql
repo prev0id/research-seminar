@@ -8,7 +8,8 @@ CREATE TABLE IF NOT EXISTS scrapping.articles
     text         TEXT,
     complexity   VARCHAR,
     reading_time INTEGER,
-    tags         jsonb
+    tags         jsonb,
+    keywords     TEXT[]
 );
 
 comment on table scrapping.articles is 'Статьи';
@@ -24,6 +25,8 @@ comment on column scrapping.articles.complexity is 'Сложность стат�
 comment on column scrapping.articles.reading_time is 'Время чтения в минутах';
 
 comment on column scrapping.articles.tags is 'Теги статьи';
+
+comment on column scrapping.articles.keywords is 'Ключевые слова';
 
 -- +goose StatementEnd
 

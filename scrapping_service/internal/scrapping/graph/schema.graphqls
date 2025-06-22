@@ -22,6 +22,7 @@ type ArticleInfo {
     tags: [String!]!
     likes: Int!
     likedByUser: Boolean!
+    keywrods: [String!]!
 }
 
 type ArticlesPagination {

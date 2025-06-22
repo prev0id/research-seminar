@@ -5,10 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
+
 	"scrapping_service/internal/scrapping/external"
 	"scrapping_service/internal/scrapping/repository"
 	"scrapping_service/pkg/middlewares"
-	"strconv"
 )
 
 func (s *Service) GetArticles(ctx context.Context, userId int, page, pageSize int) ([]*external.ArticleInfo, *external.PaginationInfo, error) {
@@ -36,6 +37,7 @@ func (s *Service) GetArticles(ctx context.Context, userId int, page, pageSize in
 			Tags:        tags,
 			Likes:       article.LikeCount,
 			LikedByUser: article.LikedByUser,
+			Keywords:    article.Keywords,
 		})
 	}
 
@@ -68,6 +70,7 @@ func (s *Service) GetArticleInfoById(ctx context.Context, userId, articleId int)
 		Tags:        tags,
 		Likes:       articleInfo.LikeCount,
 		LikedByUser: articleInfo.LikedByUser,
+		Keywords:    articleInfo.Keywords,
 	}, nil
 }
 
@@ -140,6 +143,7 @@ func (s *Service) GetArticlesByIds(ctx context.Context, userId int, ids []int) (
 			Tags:        tags,
 			Likes:       article.LikeCount,
 			LikedByUser: article.LikedByUser,
+			Keywords:    article.Keywords,
 		})
 	}
 
@@ -168,9 +172,9 @@ func (s *Service) Search(ctx context.Context, userId int, query string, pageSize
 			Tags:        tags,
 			Likes:       article.LikeCount,
 			LikedByUser: article.LikedByUser,
+			Keywords:    article.Keywords,
 		})
 	}
 
 	return articlesInfo, nil
-
 }

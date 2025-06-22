@@ -3,6 +3,7 @@
 package models
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"strconv"
@@ -17,6 +18,7 @@ type ArticleInfo struct {
 	Tags        []string `json:"tags"`
 	Likes       int      `json:"likes"`
 	LikedByUser bool     `json:"likedByUser"`
+	Keywrods    []string `json:"keywrods"`
 }
 
 type ArticlesPagination struct {
@@ -69,7 +71,7 @@ func (e Status) String() string {
 	return string(e)
 }
 
-func (e *Status) UnmarshalGQL(v interface{}) error {
+func (e *Status) UnmarshalGQL(v any) error {
 	str, ok := v.(string)
 	if !ok {
 		return fmt.Errorf("enums must be strings")
@@ -84,4 +86,18 @@ func (e *Status) UnmarshalGQL(v interface{}) error {
 
 func (e Status) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *Status) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e Status) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
 }

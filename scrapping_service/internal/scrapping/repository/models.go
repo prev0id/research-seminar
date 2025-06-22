@@ -12,6 +12,7 @@ type Article struct {
 	Complexity  sql.NullString  `db:"complexity"`
 	ReadingTime int64           `db:"reading_time"`
 	Tags        json.RawMessage `db:"tags"`
+	Keywords    []string        `db:"keywords"`
 }
 
 type ArticleInfo struct {
@@ -23,4 +24,5 @@ type ArticleInfo struct {
 	Tags        json.RawMessage `db:"tags"`
 	LikeCount   int             `db:"like_count"`
 	LikedByUser bool            `db:"liked_by_user"`
+	Keywords    []string        `db:"keywords"`
 }

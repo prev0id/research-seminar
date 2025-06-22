@@ -27,6 +27,7 @@ def extract_keywords():
         diversity=0.7
     )
     keywords = [kw[0] for kw in keywords]
+    print(keywords)
     return jsonify({'keywords': keywords})
 
 if __name__ == '__main__':

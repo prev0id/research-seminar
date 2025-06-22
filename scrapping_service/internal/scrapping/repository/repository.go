@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
@@ -49,11 +50,10 @@ func (r *Repository) GetFirstArticle(ctx context.Context) (int64, error) {
 }
 
 func (r *Repository) AddArticle(ctx context.Context, article *Article) error {
-	stmt, err := r.db.PrepareNamedContext(ctx, `INSERT INTO scrapping.articles 
-    (id, name, text, complexity, reading_time, tags)
-	VALUES (:id, :name, :text, :complexity, :reading_time, :tags)
+	stmt, err := r.db.PrepareNamedContext(ctx, `INSERT INTO scrapping.articles
+    (id, name, text, complexity, reading_time, tags, keywords)
+	VALUES (:id, :name, :text, :complexity, :reading_time, :tags, :keywords)
 	RETURNING id`)
-
 	if err != nil {
 		return fmt.Errorf("add article error: %v", err)
 	}
@@ -99,7 +99,7 @@ func (r *Repository) GetArticlesInfo(ctx context.Context, userId int, cursor *Cu
 			FROM scrapping.likes
 			GROUP BY article_id
 		)
-		SELECT a.id, a.name, a.text, a.complexity, a.reading_time, a.tags,
+		SELECT a.id, a.name, a.text, a.complexity, a.reading_time, a.tags, a.keywords,
 			   COALESCE(al.like_count, 0) AS like_count,
 			   CASE WHEN la.article_id IS NOT NULL THEN true ELSE false END AS liked_by_user
 		FROM scrapping.articles a
@@ -236,7 +236,7 @@ func (r *Repository) GetArticlesByIds(ctx context.Context, userId int, ids []int
 }
 
 func (r *Repository) Search(ctx context.Context, userId int, search string, pageSize int) ([]*ArticleInfo, error) {
-	query := `WITH 
+	query := `WITH
     	liked_articles AS (SELECT article_id
 							FROM scrapping.likes
 							WHERE user_id = $1),
@@ -255,6 +255,7 @@ func (r *Repository) Search(ctx context.Context, userId int, search string, page
 		   a.complexity,
 		   a.reading_time,
 		   a.tags,
+		   a.keywords,
 		   COALESCE(al.like_count, 0)                                   AS like_count,
 		   CASE WHEN la.article_id IS NOT NULL THEN true ELSE false END AS liked_by_user
 	FROM scrapping.articles a
@@ -276,5 +277,4 @@ func (r *Repository) Search(ctx context.Context, userId int, search string, page
 	}
 
 	return articles, nil
-
 }

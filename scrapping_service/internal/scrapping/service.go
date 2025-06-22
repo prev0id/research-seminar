@@ -6,16 +6,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/99designs/gqlgen/graphql/handler"
-	"github.com/99designs/gqlgen/graphql/playground"
-	"github.com/JohannesKaufmann/html-to-markdown"
-	"github.com/PuerkitoBio/goquery"
-	"github.com/go-co-op/gocron"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/rs/cors"
 	"net/http"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
+
 	"scrapping_service/internal/database"
 	"scrapping_service/internal/kafka"
 	"scrapping_service/internal/scrapping/external"
@@ -25,21 +21,25 @@ import (
 	"scrapping_service/internal/scrapping/repository"
 	"scrapping_service/pkg/middlewares"
 	"scrapping_service/pkg/utils"
-	"strconv"
-	"strings"
-	"sync"
-	"time"
+
+	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/playground"
+	md "github.com/JohannesKaufmann/html-to-markdown"
+	"github.com/PuerkitoBio/goquery"
+	"github.com/go-co-op/gocron"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/rs/cors"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog/log"
 )
 
-var (
-	articleMetric = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "articles",
-		Help: "The total number of successful article parsings",
-	})
-)
+var articleMetric = promauto.NewCounter(prometheus.CounterOpts{
+	Name: "articles",
+	Help: "The total number of successful article parsings",
+})
 
 type Conf struct {
 	Host      string `yaml:"host"`
@@ -85,7 +85,6 @@ func (s *Service) Configure(conf *Conf, confDb *database.Conf) {
 	s.setConf(conf)
 
 	s.Load.Do(func() {
-
 		s.converter.Before(func(item *goquery.Selection) {
 			item.Find("img").Each(func(i int, item *goquery.Selection) {
 				src, ok := item.Attr("src")
@@ -155,7 +154,7 @@ func (s *Service) start() {
 
 	r.Handle("/api/v1/scrapping/graph/query", middlewares.Auth(srv, s.getConf().CheckAuth))
 
-	r.Handle("/api/v1/scrapping/graph/playground", playground.AltairHandler("GraphQL Scrapping Playground", "/api/v1/scrapping/graph/query"))
+	r.Handle("/api/v1/scrapping/graph/playground", playground.AltairHandler("GraphQL Scrapping Playground", "/api/v1/scrapping/graph/query", nil))
 
 	r.Handle("/metrics", promhttp.Handler())
 
@@ -254,11 +253,22 @@ func (s *Service) scrap() {
 
 	for article := range result {
 		articleMetric.Inc()
+
+		keywords, err := s.getKeywords(article.Text)
+		if err != nil {
+			log.Error().Str("module", s.Name).Msgf("s.getKeywords: %v", err)
+			continue
+		}
+
+		log.Warn().Strs("keywords", keywords).Msgf("keywords OK id=%d", article.Id)
+		article.Keywords = keywords
+
 		repoArticle, err := mapArticle(article)
 		if err != nil {
 			log.Error().Str("module", s.Name).Msgf("mapArticle error: %v", err)
 			continue
 		}
+
 		err = s.repo.AddArticle(s.ctx, repoArticle)
 		if err != nil {
 			log.Error().Str("module", s.Name).Msgf("error in repo: %v", err)
@@ -375,11 +385,11 @@ func mapArticle(article *external.Article) (*repository.Article, error) {
 		Complexity:  complexity,
 		ReadingTime: article.ReadingTime,
 		Tags:        tags,
+		Keywords:    article.Keywords,
 	}, nil
 }
 
 func (s *Service) GetArticle(w http.ResponseWriter, r *http.Request) {
-
 	w.Header().Set("Content-Type", "application/json;charset=utf-8")
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.Atoi(idStr)
@@ -413,6 +423,7 @@ func (s *Service) GetArticle(w http.ResponseWriter, r *http.Request) {
 		Complexity:  dbArticle.Complexity.String,
 		ReadingTime: dbArticle.ReadingTime,
 		Tags:        tags,
+		Keywords:    dbArticle.Keywords,
 	}
 	response, err := json.Marshal(article)
 	if err != nil {
