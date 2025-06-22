@@ -1,10 +1,4 @@
 Flask>=2.0
-numpy>=1.21
-scikit-learn>=1.0
-yake>=0.4.8
-rake-nltk>=1.0.4
-summa>=1.2.0
 keybert>=0.7.0
-spacy>=3.0
 sentence-transformers>=2.2.2
 nltk>=3.6.7
